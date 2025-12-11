@@ -1,8 +1,12 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     // File Layout
-    // "rootDir": "./src",
+    "rootDir": "./src",
     // "outDir": "./dist",
 
     // Environment Settings

@@ -1,0 +1,74 @@
+[
+  {
+    "question": "What are the current interest rates set by the Federal Reserve?",
+    "expected_characteristics": {
+      "type": "factual",
+      "should_include": ["federal reserve", "interest rate", "current rate"],
+      "difficulty": "easy",
+      "requires_recent_data": true
+    }
+  },
+  {
+    "question": "Compare the renewable energy adoption rates in the European Union versus the United States",
+    "expected_characteristics": {
+      "type": "comparative",
+      "should_include": ["EU", "US", "renewable energy", "comparison"],
+      "difficulty": "medium",
+      "requires_recent_data": true
+    }
+  },
+  {
+    "question": "What is quantum entanglement and what are its practical applications?",
+    "expected_characteristics": {
+      "type": "explanatory",
+      "should_include": ["quantum entanglement", "definition", "applications"],
+      "difficulty": "medium",
+      "requires_recent_data": false
+    }
+  },
+  {
+    "question": "What were the main outcomes of COP28 climate summit?",
+    "expected_characteristics": {
+      "type": "event_summary",
+      "should_include": ["COP28", "climate", "outcomes", "agreements"],
+      "difficulty": "medium",
+      "requires_recent_data": true
+    }
+  },
+  {
+    "question": "How does CRISPR gene editing work and what are the ethical concerns?",
+    "expected_characteristics": {
+      "type": "technical_with_ethics",
+      "should_include": ["CRISPR", "gene editing", "mechanism", "ethical"],
+      "difficulty": "hard",
+      "requires_recent_data": false
+    }
+  },
+  {
+    "question": "What is the current status of SpaceX's Starship development?",
+    "expected_characteristics": {
+      "type": "project_status",
+      "should_include": ["SpaceX", "Starship", "status", "progress"],
+      "difficulty": "easy",
+      "requires_recent_data": true
+    }
+  },
+  {
+    "question": "Explain the differences between supervised and unsupervised learning in machine learning",
+    "expected_characteristics": {
+      "type": "technical_comparison",
+      "should_include": ["supervised learning", "unsupervised learning", "differences"],
+      "difficulty": "easy",
+      "requires_recent_data": false
+    }
+  },
+  {
+    "question": "What are the economic impacts of remote work on urban centers?",
+    "expected_characteristics": {
+      "type": "analysis",
+      "should_include": ["remote work", "economic impact", "cities", "urban"],
+      "difficulty": "hard",
+      "requires_recent_data": true
+    }
+  }
+]
