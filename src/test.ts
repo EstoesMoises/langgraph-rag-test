@@ -6,7 +6,7 @@ dotenv.config();
 
 /**
  * Manual execution script for testing the agent
- * Usage: npm run agent "Your research question here"
+ * Usage: pnpm test "Your research question here"
  */
 
 async function main() {

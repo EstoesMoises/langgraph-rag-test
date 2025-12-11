@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npx tsx ./src/utils/test.ts"
+    "test": "npx tsx ./src/test.ts"
   },
   "keywords": [],
   "author": "",
