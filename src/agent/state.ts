@@ -27,6 +27,12 @@ export const ResearchState = Annotation.Root({
   // Input: The research question to investigate
   question: Annotation<string>,
   
+  // Validation: Whether the question is valid for research
+  isValidQuestion: Annotation<boolean>({
+    default: () => true,
+    reducer: (_, update) => update ?? true,
+  }),
+  
   // Plan: Generated research plan with search queries
   plan: Annotation<ResearchPlan | null>({
     default: () => null,

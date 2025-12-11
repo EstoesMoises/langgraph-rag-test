@@ -36,6 +36,7 @@ async function target(inputs: Record<string, any>): Promise<Record<string, any>>
     report: result.report,
     searchResults: result.searchResults,
     metadata: result.metadata,
+    isValidQuestion: result.isValidQuestion,
   };
 }
 
@@ -53,6 +54,17 @@ async function correctnessEvaluator(run: {
   outputs: Record<string, any>;
   referenceOutputs?: Record<string, any>;
 }) {
+  const metadata = run.referenceOutputs?.metadata;
+  
+  // Skip correctness check for invalid questions
+  if (metadata?.expected_valid === false) {
+    return {
+      key: "correctness",
+      score: 1.0,
+      comment: "Skipped (invalid question)",
+    };
+  }
+
   return correctnessJudge({
     inputs: run.inputs,
     outputs: { answer: run.outputs.report },
@@ -68,6 +80,17 @@ async function citationEvaluator(run: {
   outputs: Record<string, any>;
   referenceOutputs?: Record<string, any>;
 }) {
+  const metadata = run.referenceOutputs?.metadata;
+  
+  // Skip citation check for invalid questions
+  if (metadata?.expected_valid === false) {
+    return {
+      key: "citation_quality",
+      score: 1.0,
+      comment: "Skipped (invalid question)",
+    };
+  }
+
   const report = run.outputs.report || "";
   const searchResults = run.outputs.searchResults || [];
 
@@ -105,9 +128,20 @@ async function completenessEvaluator(run: {
   referenceOutputs?: Record<string, any>;
 }) {
   const report = (run.outputs.report || "").toLowerCase();
-  const expectedChars = run.referenceOutputs?.expected_characteristics;
+  const metadata = run.referenceOutputs?.metadata;
+  
+  // Skip completeness check for invalid questions
+  if (metadata?.expected_valid === false) {
+    return {
+      key: "completeness",
+      score: 1.0,
+      comment: "Skipped (invalid question)",
+    };
+  }
 
-  if (!expectedChars?.should_include) {
+  const shouldInclude: string[] = metadata?.should_include || [];
+
+  if (shouldInclude.length === 0) {
     return {
       key: "completeness",
       score: 1.0,
@@ -115,7 +149,6 @@ async function completenessEvaluator(run: {
     };
   }
 
-  const shouldInclude: string[] = expectedChars.should_include;
   const foundTerms = shouldInclude.filter((term) =>
     report.includes(term.toLowerCase())
   );
@@ -173,6 +206,71 @@ async function performanceEvaluator(run: {
 }
 
 /**
+ * EVALUATOR 5: Validation Quality
+ * Checks if the agent correctly identifies and handles invalid questions
+ */
+async function validationEvaluator(run: {
+  inputs: Record<string, any>;
+  outputs: Record<string, any>;
+  referenceOutputs?: Record<string, any>;
+}) {
+  const metadata = run.referenceOutputs?.metadata;
+  const report = run.outputs.report || "";
+  
+  // If no validation expectations, skip this evaluator
+  if (metadata?.expected_valid === undefined) {
+    return {
+      key: "validation_quality",
+      score: 1.0,
+      comment: "No validation expectations defined",
+    };
+  }
+
+  const expectedValid = metadata.expected_valid;
+  const wasRejected = report.includes("Unable to process this research question");
+
+  let score = 0;
+  let comment = "";
+
+  if (expectedValid && !wasRejected) {
+    // Valid question was correctly processed
+    score = 1.0;
+    comment = "Valid question correctly accepted";
+  } else if (!expectedValid && wasRejected) {
+    // Invalid question was correctly rejected
+    score = 1.0;
+    
+    // Bonus: Check if helpful suggestion was provided
+    const hasSuggestion = report.includes("Suggestion:");
+    const hasReason = report.includes("Reason:");
+    
+    if (hasSuggestion && hasReason) {
+      comment = "Invalid question correctly rejected with reason and suggestion";
+    } else if (hasReason) {
+      score = 0.9;
+      comment = "Invalid question correctly rejected with reason (missing suggestion)";
+    } else {
+      score = 0.7;
+      comment = "Invalid question correctly rejected (missing details)";
+    }
+  } else if (expectedValid && wasRejected) {
+    // Valid question was incorrectly rejected (false positive)
+    score = 0.0;
+    comment = "❌ ERROR: Valid question was incorrectly rejected";
+  } else {
+    // Invalid question was incorrectly accepted (false negative)
+    score = 0.0;
+    comment = "❌ ERROR: Invalid question was incorrectly accepted";
+  }
+
+  return {
+    key: "validation_quality",
+    score,
+    comment,
+  };
+}
+
+/**
  * CREATE OR LOAD DATASET
  */
 async function setupDataset() {
@@ -190,12 +288,23 @@ async function setupDataset() {
       description: "Research questions for evaluating the research agent",
     });
 
-    const datasetPath = path.join(__dirname, "./datasets/research-questions.json");
-    const rawData = JSON.parse(fs.readFileSync(datasetPath, "utf-8"));
+    const datasetPath = path.join(__dirname, "./datasets/research-questions.jsonl");
+    
+    // Read JSONL format (each line is a separate JSON object)
+    const fileContent = fs.readFileSync(datasetPath, "utf-8");
+    const rawData = fileContent
+      .trim()
+      .split('\n')
+      .map(line => JSON.parse(line));
 
-    const inputs = rawData.map((item: any) => ({ question: item.question }));
+    // Map from JSONL format to LangSmith format
+    const inputs = rawData.map((item: any) => ({ 
+      question: item.question 
+    }));
+    
     const outputs = rawData.map((item: any) => ({
-      expected_characteristics: item.expected_characteristics,
+      expected_answer: item.expected_answer,
+      metadata: item.metadata
     }));
 
     await client.createExamples({
@@ -220,13 +329,14 @@ async function runEvaluation() {
   console.log("🚀 Running evaluation experiment...\n");
   console.log("This will:");
   console.log("1. Run the agent on each test case");
-  console.log("2. Apply evaluators (correctness, citations, completeness, performance)");
+  console.log("2. Apply evaluators (correctness, citations, completeness, performance, validation)");
   console.log("3. Upload results to LangSmith");
   console.log("\nThis may take a few minutes...\n");
 
   const results = await evaluate(target, {
-    data: dataset.name,
+    data: "c8a06ee6-9b1e-4c39-82df-fffd67be0b60", 
     evaluators: [
+      validationEvaluator,    // Run this first to properly categorize questions
       correctnessEvaluator,
       citationEvaluator,
       completenessEvaluator,
@@ -235,8 +345,8 @@ async function runEvaluation() {
     experimentPrefix: "research-agent-eval",
     maxConcurrency: 2,
     metadata: {
-      version: "1.0",
-      description: "Baseline evaluation of research agent",
+      version: "2.0",
+      description: "Evaluation of research agent with validation node",
     },
   });
 
@@ -252,9 +362,10 @@ async function runEvaluation() {
   console.log("Next steps:");
   console.log("1. Open the LangSmith UI to view detailed results");
   console.log("2. Compare runs across different test cases");
-  console.log("3. Identify failure patterns");
-  console.log("4. Iterate on agent design or prompts");
-  console.log("5. Re-run evaluation to measure improvements\n");
+  console.log("3. Check validation quality for invalid questions");
+  console.log("4. Identify failure patterns");
+  console.log("5. Iterate on agent design or prompts");
+  console.log("6. Re-run evaluation to measure improvements\n");
 
   return results;
 }

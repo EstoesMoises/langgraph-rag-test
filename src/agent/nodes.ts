@@ -184,3 +184,72 @@ Write a comprehensive research report:`],
     },
   };
 }
+
+/**
+ * VALIDATE QUESTION NODE
+ * Checks if the research question is valid and answerable.
+ * Rejects questions that are:
+ * - Too vague or ambiguous
+ * - Not research-oriented
+ * - Inappropriate or harmful
+ * - Impossible to answer through web search
+ */
+export async function validateQuestionNode(state: ResearchStateType): Promise<Partial<ResearchStateType>> {
+  console.log("\n🔍 Validating research question...");
+  
+  const prompt = ChatPromptTemplate.fromMessages([
+    ["system", `You are a research question validator. Determine if the given question is valid for research.
+
+A valid research question should be:
+- Clear and specific enough to research
+- Answerable through web search and synthesis
+- Appropriate and not harmful
+- Substantive (not yes/no or trivial)
+
+Return your response in this exact JSON format:
+{{
+  "isValid": true/false,
+  "reason": "Brief explanation",
+  "suggestion": "How to improve the question (if invalid)"
+}}`],
+    ["human", "Research question: {question}"],
+  ]);
+
+  const chain = prompt.pipe(model);
+  const response = await chain.invoke({ question: state.question });
+  
+  // Parse the LLM response
+  const content = response.content as string;
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  
+  if (!jsonMatch) {
+    throw new Error("Failed to parse validation from LLM response");
+  }
+  
+  const validation = JSON.parse(jsonMatch[0]);
+  
+  if (!validation.isValid) {
+    console.log(`❌ Question rejected: ${validation.reason}`);
+    console.log(`💡 Suggestion: ${validation.suggestion}`);
+    
+    return {
+      isValidQuestion: false,
+      report: `Unable to process this research question.\n\nReason: ${validation.reason}\n\nSuggestion: ${validation.suggestion}`,
+      metadata: {
+        steps: ["validate"],
+        startTime: state.metadata.startTime,
+        endTime: Date.now(),
+      },
+    };
+  }
+  
+  console.log(`✅ Question validated: ${validation.reason}`);
+  
+  return {
+    isValidQuestion: true,
+    metadata: {
+      steps: ["validate"],
+      startTime: state.metadata.startTime,
+    },
+  };
+}

@@ -1,6 +1,6 @@
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { ResearchState } from "./state.js";
-import { planNode, searchNode, synthesizeNode } from "./nodes.js";
+import { planNode, searchNode, synthesizeNode, validateQuestionNode } from "./nodes.js";
 
 /**
  * Main Research Agent Graph
@@ -13,20 +13,42 @@ import { planNode, searchNode, synthesizeNode } from "./nodes.js";
  * The graph is compiled into a runnable that manages state transitions.
  */
 
+/**
+ * Router function to determine if question is valid
+ */
+function routeAfterValidation(state: typeof ResearchState.State) {
+  if (state.isValidQuestion === false) {
+    return "reject"; // Go to rejection/clarification path
+  }
+  return "planning"; // Proceed with research
+}
+
 export function createResearchAgent() {
   // Initialize the graph with our state schema
   const workflow = new StateGraph(ResearchState);
 
   // Add nodes to the graph
-  // Each node is a processing step in our research pipeline
-workflow.addNode("planning", planNode);
-workflow.addNode("searching", searchNode);
-workflow.addNode("synthesizing", synthesizeNode);
+  workflow.addNode("validate", validateQuestionNode);
+  workflow.addNode("planning", planNode);
+  workflow.addNode("searching", searchNode);
+  workflow.addNode("synthesizing", synthesizeNode);
 
-workflow.addEdge(START, "planning");
-workflow.addEdge("planning", "searching");
-workflow.addEdge("searching", "synthesizing");
-workflow.addEdge("synthesizing", END);
+  // Define the flow
+  workflow.addEdge(START, "validate");
+  
+  // Conditional edge based on validation
+  workflow.addConditionalEdges(
+    "validate",
+    routeAfterValidation,
+    {
+      planning: "planning",
+      reject: END, // End if question is invalid
+    }
+  );
+  
+  workflow.addEdge("planning", "searching");
+  workflow.addEdge("searching", "synthesizing");
+  workflow.addEdge("synthesizing", END);
 
   // Compile the graph into an executable
   const app = workflow.compile();
@@ -52,30 +74,3 @@ export async function runResearch(question: string) {
 }
 
 export const graph = createResearchAgent();
-
-/**
- * DESIGN NOTES FOR EVALUATION:
- * 
- * Current graph design is intentionally simple (linear flow).
- * Potential improvements to test in evaluation:
- * 
- * 1. Conditional edges:
- *    - Check if search results are sufficient before synthesizing
- *    - Loop back to plan/search if results are poor
- * 
- * 2. Parallel execution:
- *    - Run multiple searches concurrently
- *    - Use LangGraph's parallelization features
- * 
- * 3. Quality gates:
- *    - Add a validation node after search
- *    - Conditionally branch based on result quality
- * 
- * 4. Human-in-the-loop:
- *    - Add interrupt points for review
- *    - Allow manual query refinement
- * 
- * 5. Error handling:
- *    - Graceful degradation if searches fail
- *    - Retry logic for failed API calls
- */
