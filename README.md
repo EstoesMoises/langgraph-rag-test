@@ -21,6 +21,9 @@ START → Validate → [Valid?] → Plan → Search → Synthesize → END
                     [Invalid] → END (with suggestions)
 ```
 
+<img width="817" height="763" alt="Screenshot 2025-12-11 123303" src="https://github.com/user-attachments/assets/fe085b7b-32b8-4001-8811-090c7591e8e3" />
+
+
 ### Key Components
 
 1. **State Management** (`state.ts`)
@@ -86,7 +89,7 @@ The project includes a comprehensive evaluation suite with 5 evaluators:
 
 ### Evaluators
 
-1. **Validation Quality** (NEW)
+1. **Validation Quality**
    - Checks if invalid questions are correctly rejected
    - Verifies helpful suggestions are provided
    - Ensures valid questions are accepted
