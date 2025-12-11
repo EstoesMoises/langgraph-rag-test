@@ -17,9 +17,9 @@ const retriever = vectorStore.asRetriever();
 const tool: Awaited<ReturnType<typeof createRetrieverTool>> = createRetrieverTool(
   retriever,
   {
-    name: "retrieve_blog_posts",
+    name: "retrieve_langchain_docs",
     description:
-      "Search and return information about Lilian Weng blog posts on LLM agents, prompt engineering, and adversarial attacks on LLMs.",
+      "Search and return information about LangChain documentation on getting started with LangGraph.",
   },
 );
 const tools: typeof tool[] = [tool];

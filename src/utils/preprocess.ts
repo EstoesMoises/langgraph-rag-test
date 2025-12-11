@@ -1,9 +1,11 @@
 import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
 
 const urls = [
-  "https://lilianweng.github.io/posts/2023-06-23-agent/",
-  "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
-  "https://lilianweng.github.io/posts/2023-10-25-adv-attack-llm/",
+  "https://docs.langchain.com/oss/javascript/langgraph/install",
+  "https://docs.langchain.com/oss/javascript/langgraph/quickstart",
+  "https://docs.langchain.com/oss/javascript/langgraph/local-server",
+  "https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph",
+  "https://docs.langchain.com/oss/javascript/langgraph/workflows-agents",
 ];
 
 const docs = await Promise.all(
