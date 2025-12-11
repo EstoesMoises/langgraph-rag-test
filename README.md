@@ -1,6 +1,6 @@
 # Research Agent with LangGraph
 
-A production-ready research agent built with LangGraph that intelligently validates questions, searches the web, and synthesizes comprehensive research reports with proper citations.
+A NON-production-ready research agent built with LangGraph that intelligently validates questions, searches the web, and synthesizes comprehensive research reports with proper citations.
 
 ## 🌟 Features
 
