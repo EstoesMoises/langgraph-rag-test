@@ -119,16 +119,39 @@ The project includes a comprehensive evaluation suite with 5 evaluators:
 pnpm evaluate
 ```
 
-### Dataset Format
+### Dataset Setup
 
-Test cases in `src/evaluations/datasets/research-questions.jsonl` can be uploaded directly to a LangSmith dataset.
+The evaluation system automatically creates and manages datasets in LangSmith using the SDK.
 
-My dataset ID is hardcoded on the langsmith.ts line 337, you can replace with your own dataset id.
+**Configure Dataset Name:**
+
+In `src/evaluations/langsmith.ts`, set your desired dataset name:
+
+```typescript
+const DATASET_NAME = "research_dataset" // Change this to your preferred name
+```
+
+**How it works:**
+- On first run, the evaluation creates a new dataset in LangSmith with your chosen name
+- It reads test cases from `src/evaluations/datasets/research-questions.jsonl`
+- Subsequent runs reuse the existing dataset (no duplicates created)
+- You can view and manage the dataset in the LangSmith UI
+
+**Dataset Format (JSONL):**
+
+Test cases are stored in `src/evaluations/datasets/research-questions.jsonl`:
 
 ```jsonl
 {"question": "What is photosynthesis?", "expected_answer": "...", "metadata": {"should_include": ["chlorophyll", "sunlight"], "expected_valid": true}}
 {"question": "asdfghjkl", "expected_answer": "", "metadata": {"expected_valid": false}}
 ```
+
+Each line is a JSON object with:
+- `question`: The research question to test
+- `expected_answer`: Expected response for correctness evaluation
+- `metadata`: Additional validation criteria
+  - `should_include`: Array of terms that should appear in the report
+  - `expected_valid`: Whether the question should be accepted (true) or rejected (false)
 
 ## 📊 Example Output
 

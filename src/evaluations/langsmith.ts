@@ -11,6 +11,9 @@ import { runResearch } from "@/agent/agent.js";
 
 dotenv.config();
 
+// SPECIFY THE DATASET_NAME YOU'D LIKE
+const DATASET_NAME = "research_dataset" 
+
 // ES module equivalents for __dirname and __filename
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -274,7 +277,7 @@ async function validationEvaluator(run: {
  * CREATE OR LOAD DATASET
  */
 async function setupDataset() {
-  const datasetName = "research-agent-questions";
+  const datasetName = DATASET_NAME;
 
   try {
     const dataset = await client.readDataset({ datasetName });
@@ -288,7 +291,7 @@ async function setupDataset() {
       description: "Research questions for evaluating the research agent",
     });
 
-    const datasetPath = path.join(__dirname, "./datasets/research-questions.jsonl");
+    const datasetPath = path.join(__dirname, "./datasets/research_questions.jsonl");
     
     // Read JSONL format (each line is a separate JSON object)
     const fileContent = fs.readFileSync(datasetPath, "utf-8");
@@ -334,9 +337,9 @@ async function runEvaluation() {
   console.log("\nThis may take a few minutes...\n");
 
   const results = await evaluate(target, {
-    data: "c8a06ee6-9b1e-4c39-82df-fffd67be0b60", // DATASET ID IS HARDCODED
+    data: dataset.id, 
     evaluators: [
-      validationEvaluator,    // Run this first to properly categorize questions
+      validationEvaluator,    
       correctnessEvaluator,
       citationEvaluator,
       completenessEvaluator,
