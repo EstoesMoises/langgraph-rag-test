@@ -7,7 +7,7 @@
   "scripts": {
     "test": "npx tsx ./src/agent/test.ts",
     "evaluate": "npx tsx ./src/evaluations/langsmith.ts",
-    "server": "npx @langchain/langgraph-cli dev"
+    "serve": "npx @langchain/langgraph-cli dev"
   },
   "keywords": [],
   "author": "",

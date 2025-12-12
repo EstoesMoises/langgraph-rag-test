@@ -76,7 +76,7 @@ pnpm test "What are the latest developments in quantum computing?"
 
 ```bash
 # Start development server with LangGraph Studio
-pnpm server
+pnpm serve
 ```
 If that doesn't work, use ``npx @langchain/langgraph-cli dev`` directly.
 
